@@ -1,8 +1,14 @@
-
 const searchBtn = document.getElementById("searchBtn");
 const cityInput = document.getElementById("cityInput");
 const weatherResult = document.getElementById("weatherResult");
 
+// Check if API_KEY exists
+if (typeof API_KEY === "undefined") {
+    weatherResult.innerHTML = `<p style="color:red">API key not found. Add in config.js</p>`;
+    console.error("API_KEY undefined. Add your API key in config.js");
+}
+
+// Search button click
 searchBtn.addEventListener("click", () => {
     const city = cityInput.value.trim();
     if(city === "") {
@@ -12,14 +18,22 @@ searchBtn.addEventListener("click", () => {
     getWeather(city);
 });
 
+// Function to fetch weather via free CORS proxy
 function getWeather(city) {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+    if (typeof API_KEY === "undefined") return;
 
-    fetch(url)
+    weatherResult.innerHTML = `<p>Loading weather for ${city}...</p>`;
+
+    const apiURL = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+    const proxy = "https://api.allorigins.win/raw?url=";
+
+    fetch(proxy + encodeURIComponent(apiURL))
         .then(response => response.json())
         .then(data => {
-            if(data.cod === "404") {
-                weatherResult.innerHTML = `<p>City not found!</p>`;
+            console.log("API response:", data);
+
+            if (data.cod === "404" || data.cod === 404) {
+                weatherResult.innerHTML = `<p style="color:red">City "${city}" not found!</p>`;
                 return;
             }
 
@@ -33,7 +47,7 @@ function getWeather(city) {
             `;
         })
         .catch(error => {
-            weatherResult.innerHTML = `<p>Something went wrong!</p>`;
-            console.error(error);
+            weatherResult.innerHTML = `<p style="color:red">Something went wrong! Check console.</p>`;
+            console.error("Fetch error:", error);
         });
 }
